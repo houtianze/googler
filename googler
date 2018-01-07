@@ -38,6 +38,7 @@ import sys
 import textwrap
 import urllib.parse
 import webbrowser
+import string
 
 # Python optional dependency compatibility layer
 try:
@@ -87,6 +88,8 @@ ua = True  # User Agent is enabled by default
 
 text_browsers = ['elinks', 'links', 'lynx', 'w3m', 'www-browser']
 
+single_char_commands = 'npfxq?*123456789'
+
 # Self-upgrade parameters
 #
 # Downstream packagers are recommended to turn off the entire self-upgrade
@@ -102,6 +105,38 @@ RAW_DOWNLOAD_REPO_BASE = 'https://raw.githubusercontent.com/jarun/googler'
 
 
 # Global helper functions
+# https://stackoverflow.com/a/48136131/404271
+if sys.platform == 'win32':
+    import msvcrt
+    getch = msvcrt.getch
+    getche = msvcrt.getche
+else:
+    import sys
+    import termios
+    def __gen_ch_getter(echo):
+        def __fun():
+            fd = sys.stdin.fileno()
+            oldattr = termios.tcgetattr(fd)
+            newattr = oldattr[:]
+            try:
+                if echo:
+                    # disable ctrl character printing, otherwise, backspace will be printed as "^?"
+                    lflag = ~(termios.ICANON | termios.ECHOCTL)
+                else:
+                    lflag = ~(termios.ICANON | termios.ECHO)
+                newattr[3] &= lflag
+                termios.tcsetattr(fd, termios.TCSADRAIN, newattr)
+                ch = sys.stdin.read(1)
+                if echo and ord(ch) == 127: # backspace
+                    # emulate backspace erasing
+                    # https://stackoverflow.com/a/47962872/404271
+                    sys.stdout.write('\b \b')
+            finally:
+                termios.tcsetattr(fd, termios.TCSADRAIN, oldattr)
+            return ch
+        return __fun
+    getch = __gen_ch_getter(False)
+    getche = __gen_ch_getter(True)
 
 def open_url(url):
     """Open an URL in the user's default web browser.
@@ -1911,7 +1946,24 @@ class GooglerCmd(object):
         enter_count = 0
         while True:
             try:
-                cmd = input(prompt)
+                # Behavior change - Save the [Enter] key
+                #  - evaluate each char the user inputs, not till [Enter] is pressed
+                #  - if the char evaluates to a command (e.g. 1-9,q,f,n,...), directly return it as cmd
+                #    (*Tip: to input result index greater than 0, prefix it with zero, e.g. 010)
+                #  - otherwise, read till [Enter] is pressed and return the whole string
+                cmd = ''
+                print(prompt)
+                # get first char
+                ch = ''
+                while True:
+                    ch = getche()
+                    if ch in string.printable:
+                        break
+                if ch in single_char_commands:
+                    cmd = ch
+                elif ch != '\n':
+                    cmd += input()
+                #cmd += input(prompt)
             except EOFError:
                 sys.exit(0)
 

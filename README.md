@@ -1,5 +1,9 @@
 <h1 align="center"><img src="https://cdn.rawgit.com/jarun/googler/master/googler.svg" alt="googler" /></h1>
 
+## *** Hacked to my taste ([Enter] saver) ***
+- With this mod, you don't need to type [Enter] for single-character commands (e.g. `f,p,n,q,1-9,...`)
+- *Tip*: To go to index 10 or above, prefix your number with zero (e.g. for index `10`, you type: `010[Enter]`)
+
 <p align="center">
 <a href="https://github.com/jarun/googler/releases/latest"><img src="https://img.shields.io/github/release/jarun/googler.svg?maxAge=600" alt="Latest release" /></a>
 <a href="https://aur.archlinux.org/packages/googler"><img src="https://img.shields.io/aur/version/googler.svg?maxAge=600" alt="AUR" /></a>
